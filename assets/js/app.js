@@ -1,12 +1,32 @@
 /* ============ STATE ============ */
-const state = {
-  step: 0,
-  nome:'', idade:null, sexo:'', peso:null, altura:null,
-  biotipo:'',
-  refeicoesDia:'', agua:'', frutasVeg:'', fastFood:'', pulaRefeicoes:'',
-  trabalho:'', nivelAtividade:'', diasTreino:'', tempoSessao:'',
-  horasSono:'', qualidadeSono:'', horarioRegular:''
-};
+function defaultState(){
+  return {
+    step: 0,
+    nome:'', idade:null, sexo:'', peso:null, altura:null,
+    biotipo:'',
+    refeicoesDia:'', agua:'', frutasVeg:'', fastFood:'', pulaRefeicoes:'',
+    trabalho:'', nivelAtividade:'', diasTreino:'', tempoSessao:'',
+    horasSono:'', qualidadeSono:'', horarioRegular:''
+  };
+}
+const state = defaultState();
+
+/* ============ PERSISTÊNCIA (localStorage) ============ */
+const STORAGE_KEY = 'ziulfit_state_v1';
+function saveState(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+  catch(e){ /* modo privado ou storage indisponível — segue sem persistir */ }
+}
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw) Object.assign(state, JSON.parse(raw));
+  }catch(e){ /* dado corrompido ou storage indisponível — segue com estado padrão */ }
+  state.step = 0; // sempre pousa na home; o próprio hero oferece "Continuar avaliação"
+}
+function clearState(){
+  try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
+}
 
 const RAIL_STEPS = [
   {label:'Cadastro'},
@@ -140,61 +160,136 @@ function planoRefeicoes(meta, n){
   }));
 }
 
+function ex(nome, tipo){ return {nome, tipo}; }
+
+function seriesFor(tipo, objetivo, nivel){
+  const beginner = nivel==='sedentario';
+  const schemes = {
+    compound: {
+      'Emagrecimento': beginner ? '2x12-15' : '3x12-15',
+      'Emagrecimento moderado': beginner ? '2x12-15' : '3x12-15',
+      'Manutenção e condicionamento': beginner ? '2x10-12' : '3x10-12',
+      'Ganho de peso saudável': beginner ? '3x8-10' : '4x8-10',
+    },
+    isolation: {
+      'Emagrecimento': '3x15',
+      'Emagrecimento moderado': '3x15',
+      'Manutenção e condicionamento': '3x12-15',
+      'Ganho de peso saudável': '3x10-12',
+    },
+    core: {
+      'Emagrecimento': '3x40seg',
+      'Emagrecimento moderado': '3x40seg',
+      'Manutenção e condicionamento': '3x30seg',
+      'Ganho de peso saudável': '3x20-25',
+    }
+  };
+  const table = schemes[tipo];
+  return (table && table[objetivo]) || '3x12';
+}
+
+function buildExercises(list, objetivo, nivel){
+  return list.map(e => ({ nome: e.nome, series: seriesFor(e.tipo, objetivo, nivel) }));
+}
+
 function planoTreino(dias, nivel, objetivo, biotipo){
   const emagrecer = objetivo.includes('Emagrecimento');
-  let cardio = emagrecer ? ' + 15–20min de cardio leve' : '';
-  if(biotipo==='endo' && emagrecer) cardio = ' + 20–30min de cardio';
-  if(biotipo==='ecto') cardio = emagrecer ? ' + 10–15min de cardio leve' : '';
+  let cardioDur = emagrecer ? '15–20min' : null;
+  if(biotipo==='endo' && emagrecer) cardioDur = '20–30min';
+  if(biotipo==='ecto') cardioDur = emagrecer ? '10–15min' : null;
+  const cardioItem = cardioDur ? [{nome:'Cardio leve (esteira, bike ou caminhada)', series:cardioDur}] : [];
   const nivelTxt = nivel==='sedentario' ? ' (cargas leves, foco em técnica)' : '';
-  const libs = {
-    fullA: ['Agachamento ou leg press','Supino ou flexão de braço','Remada curvada ou puxada','Elevação lateral','Prancha abdominal'+cardio],
-    fullB: ['Levantamento terra ou stiff','Desenvolvimento de ombro','Puxada frente ou barra fixa','Afundo ou cadeira extensora','Abdominal remador'+cardio],
-    upper: ['Supino reto','Remada baixa','Desenvolvimento de ombro','Rosca direta','Tríceps corda'],
-    lower: ['Agachamento livre','Stiff ou mesa flexora','Cadeira extensora','Panturrilha em pé','Abdominal'+cardio],
-    push: ['Supino inclinado','Desenvolvimento militar','Elevação lateral','Tríceps testa','Tríceps corda'],
-    pull: ['Barra fixa ou puxada','Remada curvada','Face pull','Rosca direta','Rosca alternada'],
-    legs: ['Agachamento livre','Leg press','Stiff','Panturrilha','Abdominal'+cardio],
-    cardioDay: ['Cardio contínuo 25–35min (esteira, bike ou caminhada)','Mobilidade e alongamento 10min']
+
+  const EX = {
+    agachLeg: ex('Agachamento ou leg press','compound'),
+    supinoFlex: ex('Supino ou flexão de braço','compound'),
+    remadaPux: ex('Remada curvada ou puxada','compound'),
+    elevLateral: ex('Elevação lateral','isolation'),
+    prancha: ex('Prancha abdominal','core'),
+    terraStiff: ex('Levantamento terra ou stiff','compound'),
+    desenvOmbro: ex('Desenvolvimento de ombro','compound'),
+    puxadaBarra: ex('Puxada frente ou barra fixa','compound'),
+    afundoCad: ex('Afundo ou cadeira extensora','compound'),
+    abdRemador: ex('Abdominal remador','core'),
+    supinoReto: ex('Supino reto','compound'),
+    remadaBaixa: ex('Remada baixa','compound'),
+    roscaDireta: ex('Rosca direta','isolation'),
+    tricepsCorda: ex('Tríceps corda','isolation'),
+    agachLivre: ex('Agachamento livre','compound'),
+    stiffMesa: ex('Stiff ou mesa flexora','compound'),
+    cadExt: ex('Cadeira extensora','isolation'),
+    panturrilha: ex('Panturrilha em pé','isolation'),
+    abdominal: ex('Abdominal','core'),
+    supinoInclinado: ex('Supino inclinado','compound'),
+    desenvMilitar: ex('Desenvolvimento militar','compound'),
+    tricepsTesta: ex('Tríceps testa','isolation'),
+    barraFixa: ex('Barra fixa ou puxada','compound'),
+    facePull: ex('Face pull','isolation'),
+    roscaAlt: ex('Rosca alternada','isolation'),
+    legPress: ex('Leg press','compound'),
+    stiff: ex('Stiff','compound'),
   };
+
+  const libs = {
+    fullA: [EX.agachLeg, EX.supinoFlex, EX.remadaPux, EX.elevLateral, EX.prancha],
+    fullB: [EX.terraStiff, EX.desenvOmbro, EX.puxadaBarra, EX.afundoCad, EX.abdRemador],
+    upper: [EX.supinoReto, EX.remadaBaixa, EX.desenvOmbro, EX.roscaDireta, EX.tricepsCorda],
+    lower: [EX.agachLivre, EX.stiffMesa, EX.cadExt, EX.panturrilha, EX.abdominal],
+    push: [EX.supinoInclinado, EX.desenvMilitar, EX.elevLateral, EX.tricepsTesta, EX.tricepsCorda],
+    pull: [EX.barraFixa, EX.remadaPux, EX.facePull, EX.roscaDireta, EX.roscaAlt],
+    legs: [EX.agachLivre, EX.legPress, EX.stiff, EX.panturrilha, EX.abdominal],
+  };
+
+  const build = (list, addCardio) => {
+    const items = buildExercises(list, objetivo, nivel);
+    return addCardio ? items.concat(cardioItem) : items;
+  };
+
   let plano = [];
   if(dias<=2){
     plano = [
-      {dia:'Dia 1', foco:'Full Body A'+nivelTxt, ex:libs.fullA},
-      {dia:'Dia 2', foco:'Full Body B'+nivelTxt, ex:libs.fullB}
+      {dia:'Dia 1', foco:'Full Body A'+nivelTxt, ex:build(libs.fullA, true)},
+      {dia:'Dia 2', foco:'Full Body B'+nivelTxt, ex:build(libs.fullB, true)}
     ];
   } else if(dias===3){
     plano = [
-      {dia:'Dia 1', foco:'Full Body A'+nivelTxt, ex:libs.fullA},
-      {dia:'Dia 2', foco:'Full Body B'+nivelTxt, ex:libs.fullB},
-      {dia:'Dia 3', foco:'Full Body A + cardio', ex:libs.fullA}
+      {dia:'Dia 1', foco:'Full Body A'+nivelTxt, ex:build(libs.fullA, true)},
+      {dia:'Dia 2', foco:'Full Body B'+nivelTxt, ex:build(libs.fullB, true)},
+      {dia:'Dia 3', foco:'Full Body A + cardio', ex:build(libs.fullA, true)}
     ];
   } else if(dias===4){
     plano = [
-      {dia:'Dia 1', foco:'Superiores', ex:libs.upper},
-      {dia:'Dia 2', foco:'Inferiores', ex:libs.lower},
-      {dia:'Dia 3', foco:'Superiores', ex:libs.upper},
-      {dia:'Dia 4', foco:'Inferiores', ex:libs.lower}
+      {dia:'Dia 1', foco:'Superiores', ex:build(libs.upper, false)},
+      {dia:'Dia 2', foco:'Inferiores', ex:build(libs.lower, true)},
+      {dia:'Dia 3', foco:'Superiores', ex:build(libs.upper, false)},
+      {dia:'Dia 4', foco:'Inferiores', ex:build(libs.lower, true)}
     ];
   } else if(dias===5){
     plano = [
-      {dia:'Dia 1', foco:'Push (peito/ombro/tríceps)', ex:libs.push},
-      {dia:'Dia 2', foco:'Pull (costas/bíceps)', ex:libs.pull},
-      {dia:'Dia 3', foco:'Pernas', ex:libs.legs},
-      {dia:'Dia 4', foco:'Superiores', ex:libs.upper},
-      {dia:'Dia 5', foco:'Cardio + core', ex:libs.cardioDay}
+      {dia:'Dia 1', foco:'Push (peito/ombro/tríceps)', ex:build(libs.push, false)},
+      {dia:'Dia 2', foco:'Pull (costas/bíceps)', ex:build(libs.pull, false)},
+      {dia:'Dia 3', foco:'Pernas', ex:build(libs.legs, true)},
+      {dia:'Dia 4', foco:'Superiores', ex:build(libs.upper, false)},
+      {dia:'Dia 5', foco:'Cardio + core', ex:[
+        {nome:'Cardio contínuo (esteira, bike ou caminhada)', series:'25–35min'},
+        {nome:'Mobilidade e alongamento', series:'10min'}
+      ]}
     ];
   } else {
     plano = [
-      {dia:'Dia 1', foco:'Push', ex:libs.push},
-      {dia:'Dia 2', foco:'Pull', ex:libs.pull},
-      {dia:'Dia 3', foco:'Pernas', ex:libs.legs},
-      {dia:'Dia 4', foco:'Push', ex:libs.push},
-      {dia:'Dia 5', foco:'Pull', ex:libs.pull},
-      {dia:'Dia 6', foco:'Pernas + cardio', ex:libs.legs}
+      {dia:'Dia 1', foco:'Push', ex:build(libs.push, false)},
+      {dia:'Dia 2', foco:'Pull', ex:build(libs.pull, false)},
+      {dia:'Dia 3', foco:'Pernas', ex:build(libs.legs, false)},
+      {dia:'Dia 4', foco:'Push', ex:build(libs.push, false)},
+      {dia:'Dia 5', foco:'Pull', ex:build(libs.pull, false)},
+      {dia:'Dia 6', foco:'Pernas + cardio', ex:build(libs.legs, true)}
     ];
   }
   while(plano.length < 7){
-    plano.push({dia:'Dia '+(plano.length+1), foco:'Descanso', ex:['Alongamento leve','Caminhada opcional'], rest:true});
+    plano.push({dia:'Dia '+(plano.length+1), foco:'Descanso', ex:[
+      {nome:'Alongamento leve', series:'10-15min'},
+      {nome:'Caminhada opcional', series:'20-30min'}
+    ], rest:true});
   }
   return plano;
 }
@@ -244,20 +339,42 @@ function renderRail(){
 }
 
 /* ============ RENDER: STEPS ============ */
+function hasSavedProgress(){
+  return !!(state.nome && state.nome.trim().length>0) || state.peso!=null || state.altura!=null;
+}
+
+function furthestValidStep(){
+  const cur = state.step;
+  for(let s=1; s<=6; s++){
+    state.step = s;
+    const ok = validateStep();
+    state.step = cur;
+    if(!ok) return s;
+  }
+  return 7;
+}
+
 function renderStep0(){
+  const resuming = hasSavedProgress();
+  const primeiroNome = state.nome ? state.nome.split(' ')[0] : '';
   return `
   <div class="card hero">
     <div>
-      <p class="eyebrow">Avaliação gratuita · 5 minutos</p>
+      <p class="eyebrow">${resuming ? 'Avaliação salva neste aparelho' : 'Avaliação gratuita · 5 minutos'}</p>
       <h1 class="hero-title">Seu corpo,<br><span class="accent">seu plano.</span></h1>
-      <p class="hero-lede">Responda sobre seu corpo, biotipo, alimentação, rotina e sono. A ZIULFIT calcula seu IMC e monta um plano de treino e alimentação sob medida — na hora, direto no seu celular.</p>
+      <p class="hero-lede">${resuming
+        ? `Encontramos respostas salvas${primeiroNome ? ' de <b style="color:var(--text)">'+primeiroNome+'</b>' : ''} neste navegador. Você pode continuar de onde parou ou começar uma nova avaliação.`
+        : 'Responda sobre seu corpo, biotipo, alimentação, rotina e sono. A ZIULFIT calcula seu IMC e monta um plano de treino e alimentação sob medida — na hora, direto no seu celular.'}</p>
       <div class="hero-points">
         <div class="hero-point"><span class="n">01</span> Cadastro e cálculo automático do IMC</div>
         <div class="hero-point"><span class="n">02</span> Descubra seu biotipo com o teste do punho</div>
         <div class="hero-point"><span class="n">03</span> Perguntas sobre alimentação, rotina e sono</div>
         <div class="hero-point"><span class="n">04</span> Plano de treino e cardápio gerado para você</div>
       </div>
-      <button class="btn btn-primary" id="startBtn">Iniciar avaliação →</button>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <button class="btn btn-primary" id="startBtn">${resuming ? 'Continuar avaliação →' : 'Iniciar avaliação →'}</button>
+        ${resuming ? `<button class="btn btn-ghost" id="freshStartBtn">Começar do zero</button>` : ''}
+      </div>
     </div>
     <div class="hero-visual">
       <div class="gauge">
@@ -307,11 +424,14 @@ function renderStep1(){
       </div>
       <div class="field">
         <label for="peso">Peso atual (kg)</label>
-        <input type="number" id="peso" inputmode="decimal" min="30" max="300" step="0.1" placeholder="Ex: 78.5" value="${state.peso ?? ''}">
+        <input type="text" id="peso" inputmode="decimal" autocomplete="off" placeholder="Ex: 78,5" value="${state.peso ?? ''}">
+        <span class="hint err" id="pesoErr" hidden>Digite um peso válido em quilos (kg), entre 30 e 300.</span>
       </div>
       <div class="field">
         <label for="altura">Altura (cm)</label>
-        <input type="number" id="altura" inputmode="numeric" min="120" max="230" placeholder="Ex: 172" value="${state.altura ?? ''}">
+        <input type="text" id="altura" inputmode="decimal" autocomplete="off" placeholder="Ex: 172" value="${state.altura ?? ''}">
+        <span class="hint" id="alturaHint">Pode digitar em cm (172) ou metros (1,72) — a gente ajusta pra você.</span>
+        <span class="hint err" id="alturaErr" hidden>Digite uma altura válida, entre 120cm e 230cm (ou 1,20m e 2,30m).</span>
       </div>
     </div>
     <div class="btn-row">
@@ -633,7 +753,7 @@ function renderStep7(){
           <div class="day ${d.rest?'rest':''}">
             <div class="dname">${d.dia}</div>
             <div class="dfocus">${d.foco}</div>
-            <div class="dexercises"><ul>${d.ex.map(e=>`<li>${e}</li>`).join('')}</ul></div>
+            <div class="dexercises"><ul>${d.ex.map(e=>`<li><span class="exname">${e.nome}</span><span class="exseries">${e.series}</span></li>`).join('')}</ul></div>
           </div>`).join('')}
       </div>
     </div>
@@ -659,9 +779,12 @@ function renderStep7(){
 }
 
 /* ============ VALIDATION ============ */
+function pesoValido(v){ return v!=null && v>=30 && v<=300; }
+function alturaValida(v){ return v!=null && v>=100 && v<=230; }
+
 function validateStep(){
   if(state.step===1){
-    return state.nome.trim().length>1 && state.idade>0 && state.sexo && state.peso>0 && state.altura>0;
+    return state.nome.trim().length>1 && state.idade>0 && state.sexo && pesoValido(state.peso) && alturaValida(state.altura);
   }
   if(state.step===3){ return !!state.biotipo; }
   if(state.step===4){
@@ -683,28 +806,43 @@ function render(){
   app.innerHTML = renderers[state.step]();
   renderRail();
   bindEvents();
+  saveState();
   window.scrollTo({top:0, behavior:'smooth'});
 }
 
 function refreshNext(){
   const nb = document.getElementById('nextBtn');
   if(nb) nb.disabled = !validateStep();
+
+  const pesoErr = document.getElementById('pesoErr');
+  if(pesoErr) pesoErr.hidden = (state.peso==null || pesoValido(state.peso));
+
+  const alturaErr = document.getElementById('alturaErr');
+  const alturaHint = document.getElementById('alturaHint');
+  const alturaInvalid = state.altura!=null && !alturaValida(state.altura);
+  if(alturaErr) alturaErr.hidden = !alturaInvalid;
+  if(alturaHint) alturaHint.hidden = alturaInvalid;
 }
 
 function bindEvents(){
   const startBtn = document.getElementById('startBtn');
-  if(startBtn) startBtn.onclick = ()=>{ state.step=1; render(); };
+  if(startBtn) startBtn.onclick = ()=>{ state.step = hasSavedProgress() ? furthestValidStep() : 1; render(); };
+
+  const freshStartBtn = document.getElementById('freshStartBtn');
+  if(freshStartBtn) freshStartBtn.onclick = ()=>{
+    Object.assign(state, defaultState());
+    clearState();
+    state.step = 1;
+    render();
+  };
 
   const backBtn = document.getElementById('backBtn');
   if(backBtn) backBtn.onclick = ()=>{ state.step--; render(); };
 
   const restartBtn = document.getElementById('restartBtn');
   if(restartBtn) restartBtn.onclick = ()=>{
-    Object.assign(state, {step:0, nome:'', idade:null, sexo:'', peso:null, altura:null,
-      biotipo:'',
-      refeicoesDia:'', agua:'', frutasVeg:'', fastFood:'', pulaRefeicoes:'',
-      trabalho:'', nivelAtividade:'', diasTreino:'', tempoSessao:'',
-      horasSono:'', qualidadeSono:'', horarioRegular:''});
+    Object.assign(state, defaultState());
+    clearState();
     render();
   };
 
@@ -713,15 +851,47 @@ function bindEvents(){
     nextBtn.disabled = !validateStep();
     nextBtn.onclick = ()=>{ state.step++; render(); };
   }
+  refreshNext(); // sincroniza avisos de peso/altura com dados restaurados
+
+  function parseHumanNumber(raw){
+    if(raw==null) return null;
+    let s = String(raw).trim();
+    if(s==='') return null;
+    if(s.includes(',')){
+      s = s.replace(/\./g,'').replace(',', '.'); // pt-BR: vírgula é o separador decimal
+    }
+    const v = parseFloat(s);
+    return isNaN(v) ? null : v;
+  }
 
   ['nome','idade','sexo','peso','altura'].forEach(id=>{
     const el = document.getElementById(id);
     if(!el) return;
     el.oninput = ()=>{
-      state[id] = (id==='idade'||id==='peso'||id==='altura') ? parseFloat(el.value)||null : el.value;
+      if(id==='idade'){
+        state.idade = parseInt(el.value,10) || null;
+      } else if(id==='peso'){
+        let v = parseHumanNumber(el.value);
+        state.peso = v;
+      } else if(id==='altura'){
+        let v = parseHumanNumber(el.value);
+        if(v!=null && v>0 && v<3.5) v = Math.round(v*100); // digitado em metros (ex: 1,78) -> converte pra cm
+        state.altura = v;
+      } else {
+        state[id] = el.value;
+      }
       refreshNext();
+      saveState();
     };
   });
+
+  const alturaEl = document.getElementById('altura');
+  if(alturaEl){
+    alturaEl.onblur = ()=>{
+      // reflete a conversão/valor final no campo, pra ficar transparente pro usuário
+      if(state.altura!=null) alturaEl.value = state.altura;
+    };
+  }
 
   // choice cards
   document.querySelectorAll('.choice').forEach(el=>{
@@ -731,6 +901,7 @@ function bindEvents(){
       document.querySelectorAll(`.choice[data-name="${name}"]`).forEach(c=>c.classList.remove('selected'));
       el.classList.add('selected');
       refreshNext();
+      saveState();
     };
     el.onclick = activate;
     el.onkeydown = e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); activate(); } };
@@ -755,4 +926,5 @@ if(logoHome){
   logoHome.onkeydown = e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); goHome(); } };
 }
 
+loadState();
 render();
