@@ -31,3 +31,10 @@ Para publicar no GitHub Pages: suba a pasta inteira no repositório e ative o Pa
 - **Macros**: proteína 1.8–2.0 g/kg; gordura 24–32% (por biotipo); carboidrato no restante
 
 > Conteúdo educativo — não substitui nutricionista, médico ou educador físico.
+
+## Changelog
+
+- **Biotipo**: nova etapa com teste do punho (ilustrado) e 3 cards (Ecto/Meso/Endomorfo) que ajustam calorias, macros e cardio do plano final.
+- **Logo "ZIULFIT"**: corrigido bug de `flex gap` que separava visualmente "ZIUL" e "FIT"; agora clicar no logo volta para a página inicial (mantendo os dados preenchidos).
+- **Mobile**: corrigida a barra lateral de etapas (rail) que ficava visível indevidamente em telas pequenas; corrigida quebra de texto no bloco do teste do punho; testado em iPhone (Safari) e Android (Chrome) sem overflow horizontal em nenhuma etapa.
+

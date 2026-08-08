@@ -748,4 +748,11 @@ function bindEvents(){
   });
 }
 
+const logoHome = document.getElementById('logoHome');
+if(logoHome){
+  const goHome = ()=>{ if(state.step!==0){ state.step=0; render(); } };
+  logoHome.onclick = goHome;
+  logoHome.onkeydown = e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); goHome(); } };
+}
+
 render();
