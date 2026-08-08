@@ -91,12 +91,27 @@ function calcIMC(){
   return state.peso / (alturaM*alturaM);
 }
 function classificaIMC(imc){
-  if(imc < 18.5) return {label:'Abaixo do peso', color:'var(--coral)', zona:'vermelho'};
-  if(imc < 25) return {label:'Peso normal', color:'var(--lime)', zona:'verde'};
-  if(imc < 30) return {label:'Sobrepeso', color:'var(--amber)', zona:'amarelo'};
-  if(imc < 35) return {label:'Obesidade grau I', color:'var(--coral)', zona:'vermelho'};
-  if(imc < 40) return {label:'Obesidade grau II', color:'var(--coral)', zona:'vermelho'};
-  return {label:'Obesidade grau III', color:'var(--coral)', zona:'vermelho'};
+  if(imc < 18.5) return {label:'Abaixo do peso', color:'var(--coral)', zona:'vermelho', marker:'baixo'};
+  if(imc < 25) return {label:'Peso normal', color:'var(--lime)', zona:'verde', marker:'normal'};
+  if(imc < 30) return {label:'Sobrepeso', color:'var(--amber)', zona:'amarelo', marker:'sobrepeso'};
+  if(imc < 35) return {label:'Obesidade grau I', color:'var(--coral)', zona:'vermelho', marker:'obesidade'};
+  if(imc < 40) return {label:'Obesidade grau II', color:'var(--coral)', zona:'vermelho', marker:'obesidade'};
+  return {label:'Obesidade grau III', color:'var(--coral)', zona:'vermelho', marker:'obesidade'};
+}
+
+function gaugeLabelsHTML(preview, activeMarker){
+  const items = [
+    {marker:'baixo', text:'Abaixo', color:'var(--coral)', cls:'lbl-v1'},
+    {marker:'normal', text:'Normal', color:'var(--lime)', cls:'lbl-verde'},
+    {marker:'sobrepeso', text:'Sobrepeso', color:'var(--amber)', cls:'lbl-amarelo'},
+    {marker:'obesidade', text:'Obesidade', color:'var(--coral)', cls:'lbl-v2'},
+  ];
+  return `<div class="gauge-labels${preview?' preview':''}">
+    ${items.map(it=>{
+      const active = (!preview && activeMarker===it.marker) ? ' active' : '';
+      return `<span class="glabel ${it.cls}${active}" style="color:${it.color}">${it.text}</span>`;
+    }).join('')}
+  </div>`;
 }
 
 /* ============ PLAN LOGIC ============ */
@@ -377,15 +392,18 @@ function renderStep0(){
       </div>
     </div>
     <div class="hero-visual">
-      <div class="gauge">
-        <div class="gauge-arc" style="background:conic-gradient(from 180deg,
-            var(--coral) 0deg 25.2deg,
-            var(--lime) 25.2deg 72deg,
-            var(--amber) 72deg 108deg,
-            var(--coral) 108deg 180deg,
-            transparent 180deg 360deg);"></div>
-        <div class="gauge-mask"></div>
-        <div class="gauge-needle preview"></div>
+      <div class="gauge-frame">
+        ${gaugeLabelsHTML(true)}
+        <div class="gauge">
+          <div class="gauge-arc" style="background:conic-gradient(from 180deg,
+              var(--coral) 0deg 25.2deg,
+              var(--lime) 25.2deg 72deg,
+              var(--amber) 72deg 108deg,
+              var(--coral) 108deg 180deg,
+              transparent 180deg 360deg);"></div>
+          <div class="gauge-mask"></div>
+          <div class="gauge-needle preview"></div>
+        </div>
       </div>
       <p class="gauge-preview-label">Prévia — assim ficará o seu resultado</p>
       <div class="hero-badges">
@@ -461,24 +479,21 @@ function renderStep2(){
     <h2>Seu IMC${state.nome?`, ${state.nome.split(' ')[0]}`:''}</h2>
     <p class="sub">Índice de Massa Corporal — relação entre seu peso e sua altura.</p>
     <div class="imc-wrap zona-${classe.zona}">
-      <div class="gauge">
-        <div class="gauge-arc" style="background:conic-gradient(from 180deg,
-            var(--coral) 0deg 25.2deg,
-            var(--lime) 25.2deg 72deg,
-            var(--amber) 72deg 108deg,
-            var(--coral) 108deg 180deg,
-            transparent 180deg 360deg);"></div>
-        <div class="gauge-mask"></div>
-        <div class="gauge-needle" style="--angle:${angle}deg;--needle-color:${classe.color}"></div>
+      <div class="gauge-frame">
+        ${gaugeLabelsHTML(false, classe.marker)}
+        <div class="gauge">
+          <div class="gauge-arc" style="background:conic-gradient(from 180deg,
+              var(--coral) 0deg 25.2deg,
+              var(--lime) 25.2deg 72deg,
+              var(--amber) 72deg 108deg,
+              var(--coral) 108deg 180deg,
+              transparent 180deg 360deg);"></div>
+          <div class="gauge-mask"></div>
+          <div class="gauge-needle" style="--angle:${angle}deg;--needle-color:${classe.color}"></div>
+        </div>
       </div>
       <div class="imc-value mono" style="color:${classe.color}">${fmt(imc,1)}</div>
       <div class="imc-classe" style="border-color:${classe.color};color:${classe.color}">${classe.label}</div>
-      <div class="imc-legend">
-        <span><i class="sw" style="background:var(--coral)"></i>Abaixo do peso</span>
-        <span><i class="sw" style="background:var(--lime)"></i>Normal</span>
-        <span><i class="sw" style="background:var(--amber)"></i>Sobrepeso</span>
-        <span><i class="sw" style="background:var(--coral)"></i>Obesidade</span>
-      </div>
       <p class="imc-note">${notes[classe.label]}</p>
     </div>
     <div class="btn-row">

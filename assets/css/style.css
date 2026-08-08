@@ -516,8 +516,66 @@
     align-items:center;
     padding:8px 0 4px;
   }
-  .gauge{
+  .gauge-frame{
     width:min(280px, 78vw);
+    display:flex;
+    flex-direction:column;
+  }
+  .gauge-labels{
+    display:grid;
+    grid-template-columns: 16% 26% 20% 38%;
+    align-items:end;
+    margin-bottom:6px;
+    padding:0 1px;
+  }
+  .glabel{
+    font-family:'JetBrains Mono',monospace;
+    font-size:9.5px;
+    font-weight:700;
+    text-transform:uppercase;
+    text-align:center;
+    line-height:1.15;
+    opacity:0.3;
+    white-space:nowrap;
+    transition:opacity .3s ease, text-shadow .3s ease;
+  }
+  .glabel.lbl-v1{text-align:left;}
+  .glabel.lbl-v2{text-align:right;}
+  .glabel.active{
+    opacity:1;
+    text-shadow:0 0 10px currentColor;
+  }
+  /* Prévia da home: cada rótulo acende conforme o ponteiro cruza sua faixa */
+  .gauge-labels.preview .lbl-v1{ animation:labelPulseV1 8s ease-in-out infinite; }
+  .gauge-labels.preview .lbl-verde{ animation:labelPulseVerde 8s ease-in-out infinite; }
+  .gauge-labels.preview .lbl-amarelo{ animation:labelPulseAmarelo 8s ease-in-out infinite; }
+  .gauge-labels.preview .lbl-v2{ animation:labelPulseV2 8s ease-in-out infinite; }
+  @keyframes labelPulseV1{
+    0%,7%    { opacity:1; text-shadow:0 0 10px currentColor; }
+    9%,92%   { opacity:0.3; text-shadow:none; }
+    94%,100% { opacity:1; text-shadow:0 0 10px currentColor; }
+  }
+  @keyframes labelPulseVerde{
+    0%,6%    { opacity:0.3; text-shadow:none; }
+    8%,20%   { opacity:1; text-shadow:0 0 10px currentColor; }
+    22%,79%  { opacity:0.3; text-shadow:none; }
+    81%,93%  { opacity:1; text-shadow:0 0 10px currentColor; }
+    95%,100% { opacity:0.3; text-shadow:none; }
+  }
+  @keyframes labelPulseAmarelo{
+    0%,19%   { opacity:0.3; text-shadow:none; }
+    21%,30%  { opacity:1; text-shadow:0 0 10px currentColor; }
+    32%,69%  { opacity:0.3; text-shadow:none; }
+    71%,80%  { opacity:1; text-shadow:0 0 10px currentColor; }
+    82%,100% { opacity:0.3; text-shadow:none; }
+  }
+  @keyframes labelPulseV2{
+    0%,29%   { opacity:0.3; text-shadow:none; }
+    31%,69%  { opacity:1; text-shadow:0 0 10px currentColor; }
+    71%,100% { opacity:0.3; text-shadow:none; }
+  }
+  .gauge{
+    width:100%;
     aspect-ratio:280/150;
     position:relative;
     overflow:hidden;
