@@ -396,11 +396,12 @@ function renderStep0(){
         ${gaugeLabelsHTML(true)}
         <div class="gauge">
           <div class="gauge-arc" style="background:conic-gradient(from 180deg,
-              var(--coral) 0deg 25.2deg,
-              var(--lime) 25.2deg 72deg,
-              var(--amber) 72deg 108deg,
-              var(--coral) 108deg 180deg,
-              transparent 180deg 360deg);"></div>
+              transparent 0deg 90deg,
+              var(--coral) 90deg 115.2deg,
+              var(--lime) 115.2deg 162deg,
+              var(--amber) 162deg 198deg,
+              var(--coral) 198deg 270deg,
+              transparent 270deg 360deg);"></div>
           <div class="gauge-mask"></div>
           <div class="gauge-needle preview"></div>
         </div>
@@ -483,11 +484,12 @@ function renderStep2(){
         ${gaugeLabelsHTML(false, classe.marker)}
         <div class="gauge">
           <div class="gauge-arc" style="background:conic-gradient(from 180deg,
-              var(--coral) 0deg 25.2deg,
-              var(--lime) 25.2deg 72deg,
-              var(--amber) 72deg 108deg,
-              var(--coral) 108deg 180deg,
-              transparent 180deg 360deg);"></div>
+              transparent 0deg 90deg,
+              var(--coral) 90deg 115.2deg,
+              var(--lime) 115.2deg 162deg,
+              var(--amber) 162deg 198deg,
+              var(--coral) 198deg 270deg,
+              transparent 270deg 360deg);"></div>
           <div class="gauge-mask"></div>
           <div class="gauge-needle" style="--angle:${angle}deg;--needle-color:${classe.color}"></div>
         </div>
