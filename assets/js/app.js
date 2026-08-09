@@ -824,6 +824,12 @@ function renderStep7(){
 
     <div class="btn-row">
       <button class="btn btn-ghost" id="restartBtn">↺ Refazer avaliação</button>
+      <span class="spacer"></span>
+      <button class="btn btn-ghost" id="printBtn">
+        <svg viewBox="0 0 24 24" fill="none" width="16" height="16" style="vertical-align:-3px;margin-right:6px;">
+          <path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2M6 14h12v7H6v-7z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>Imprimir plano
+      </button>
     </div>
 
     <div class="disclaimer">
@@ -899,6 +905,9 @@ function bindEvents(){
     clearState();
     render();
   };
+
+  const printBtn = document.getElementById('printBtn');
+  if(printBtn) printBtn.onclick = ()=>{ window.print(); };
 
   const nextBtn = document.getElementById('nextBtn');
   if(nextBtn){

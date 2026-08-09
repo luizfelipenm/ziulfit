@@ -991,3 +991,70 @@
     color:var(--text-faint);
     letter-spacing:0.06em;
   }
+
+  /* ============ IMPRESSÃO ============ */
+  @media print{
+    /* Esconde tudo que é navegação/interação — só o conteúdo do plano deve sair no papel */
+    .topbar, .mprogress, .rail, .footer,
+    #restartBtn, #printBtn, .btn-row,
+    .hero-badges, .gauge-preview-label{
+      display:none !important;
+    }
+    html, body{
+      background:#fff !important;
+      color:#161f1c !important;
+    }
+    .shell{
+      max-width:100% !important;
+      padding:0 !important;
+      margin:0 !important;
+    }
+    .layout{
+      display:block !important;
+    }
+    .card{
+      background:#fff !important;
+      border:1px solid #d8ded9 !important;
+      box-shadow:none !important;
+      backdrop-filter:none !important;
+      animation:none !important;
+      padding:0 !important;
+    }
+    .card::before{ display:none !important; }
+    .gauge-frame{ display:none !important; }
+
+    h1,h2,h3,.section-title,.dfocus,.mealname,.brname,
+    .imc-value,.imc-classe,.sval,.mgrams,.mealkcal,.exseries,.exname{
+      color:#131a17 !important;
+      text-shadow:none !important;
+      -webkit-print-color-adjust:exact;
+      print-color-adjust:exact;
+    }
+    .eyebrow{ color:#4a7a1f !important; }
+    .obj-badge{
+      background:#eef6de !important;
+      border:1px solid #9fc26b !important;
+      color:#3f6b1a !important;
+    }
+    .sub, .ssub, .cdesc, .imc-note, .tip, .mealsug, p{
+      color:#4b5a55 !important;
+    }
+    .stat, .macro, .meal, .day, .tip, .bio-result{
+      background:#f6f8f6 !important;
+      border:1px solid #dde3de !important;
+      box-shadow:none !important;
+      break-inside:avoid;
+    }
+    .section-block, .stat-row, .macro-row, .tips-grid, .week-grid, .meal{
+      break-inside:avoid;
+    }
+    .mbar{ background:#e1e6e2 !important; }
+    .tip b, .day .dfocus, .day.rest .dfocus, .bio-result .brname b{ color:#131a17 !important; }
+    .day.rest{ opacity:1 !important; }
+    .day.rest .exname, .day.rest .exseries, .day.rest .dexercises{ color:#4b5a55 !important; }
+    .disclaimer{
+      color:#6b7873 !important;
+      border-top:1px solid #dde3de !important;
+    }
+    a{ color:#3f6b1a !important; text-decoration:none !important; }
+  }
