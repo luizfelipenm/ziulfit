@@ -91,27 +91,64 @@ function calcIMC(){
   return state.peso / (alturaM*alturaM);
 }
 function classificaIMC(imc){
-  if(imc < 18.5) return {label:'Abaixo do peso', color:'var(--coral)', zona:'vermelho', marker:'baixo'};
-  if(imc < 25) return {label:'Peso normal', color:'var(--lime)', zona:'verde', marker:'normal'};
-  if(imc < 30) return {label:'Sobrepeso', color:'var(--amber)', zona:'amarelo', marker:'sobrepeso'};
-  if(imc < 35) return {label:'Obesidade grau I', color:'var(--coral)', zona:'vermelho', marker:'obesidade'};
-  if(imc < 40) return {label:'Obesidade grau II', color:'var(--coral)', zona:'vermelho', marker:'obesidade'};
-  return {label:'Obesidade grau III', color:'var(--coral)', zona:'vermelho', marker:'obesidade'};
+  if(imc < 18.5) return {label:'Abaixo do peso', faixa:'< 18,5', color:'var(--imc-azul-out)', zona:'azul', marker:'abaixo'};
+  if(imc < 23) return {label:'Normal', faixa:'18,5 – 22,9', color:'var(--imc-verde-out)', zona:'verde', marker:'normal'};
+  if(imc < 25) return {label:'Risco de sobrepeso', faixa:'23 – 24,9', color:'var(--imc-amarelo-out)', zona:'amarelo', marker:'risco'};
+  if(imc < 30) return {label:'Sobrepeso', faixa:'25 – 29,9', color:'var(--imc-vermelho-out)', zona:'vermelho', marker:'sobrepeso'};
+  return {label:'Obeso', faixa:'> 30', color:'var(--imc-vescuro-out)', zona:'vescuro', marker:'obeso'};
+}
+
+const IMC_ZONES = [
+  {marker:'abaixo', name:'Abaixo do peso', range:'< 18,5', out:'var(--imc-azul-out)', inn:'var(--imc-azul-in)'},
+  {marker:'normal', name:'Normal', range:'18,5 – 22,9', out:'var(--imc-verde-out)', inn:'var(--imc-verde-in)'},
+  {marker:'risco', name:'Risco de sobrepeso', range:'23 – 24,9', out:'var(--imc-amarelo-out)', inn:'var(--imc-amarelo-in)'},
+  {marker:'sobrepeso', name:'Sobrepeso', range:'25 – 29,9', out:'var(--imc-vermelho-out)', inn:'var(--imc-vermelho-in)'},
+  {marker:'obeso', name:'Obeso', range:'> 30', out:'var(--imc-vescuro-out)', inn:'var(--imc-vescuro-in)'},
+];
+
+const GAUGE_ASPECT = 280/150;
+function radialPos(needleAngle, radiusPct){
+  const rad = needleAngle * Math.PI/180;
+  const dx = -Math.cos(rad);
+  const dy = -Math.sin(rad);
+  const left = 50 + dx*radiusPct*50;
+  const top = 93.3 + dy*radiusPct*50*GAUGE_ASPECT;
+  const rotate = needleAngle - 90;
+  return {left, top, rotate};
+}
+
+function gaugeRingsHTML(){
+  return `<div class="ring ring-outer" style="background:conic-gradient(from 180deg,
+      transparent 0deg 90deg,
+      ${IMC_ZONES[0].out} 90deg 126deg,
+      ${IMC_ZONES[1].out} 126deg 162deg,
+      ${IMC_ZONES[2].out} 162deg 198deg,
+      ${IMC_ZONES[3].out} 198deg 234deg,
+      ${IMC_ZONES[4].out} 234deg 270deg,
+      transparent 270deg 360deg);"></div>
+    <div class="ring ring-inner" style="background:conic-gradient(from 180deg,
+      transparent 0deg 90deg,
+      ${IMC_ZONES[0].inn} 90deg 126deg,
+      ${IMC_ZONES[1].inn} 126deg 162deg,
+      ${IMC_ZONES[2].inn} 162deg 198deg,
+      ${IMC_ZONES[3].inn} 198deg 234deg,
+      ${IMC_ZONES[4].inn} 234deg 270deg,
+      transparent 270deg 360deg);"></div>
+    <div class="hub">IMC</div>`;
 }
 
 function gaugeLabelsHTML(preview, activeMarker){
-  const items = [
-    {marker:'baixo', text:'Abaixo', color:'var(--coral)', cls:'lbl-v1'},
-    {marker:'normal', text:'Normal', color:'var(--lime)', cls:'lbl-verde'},
-    {marker:'sobrepeso', text:'Sobrepeso', color:'var(--amber)', cls:'lbl-amarelo'},
-    {marker:'obesidade', text:'Obesidade', color:'var(--coral)', cls:'lbl-v2'},
-  ];
-  return `<div class="gauge-labels${preview?' preview':''}">
-    ${items.map(it=>{
-      const active = (!preview && activeMarker===it.marker) ? ' active' : '';
-      return `<span class="glabel ${it.cls}${active}" style="color:${it.color}">${it.text}</span>`;
-    }).join('')}
-  </div>`;
+  const mids = [18, 54, 90, 126, 162]; // ponto médio de cada faixa de 36°
+  const items = IMC_ZONES.map((z, i) => {
+    const outerPos = radialPos(mids[i], 0.845);
+    const innerPos = radialPos(mids[i], 0.56);
+    const active = (!preview && activeMarker===z.marker) ? ' active' : '';
+    return `<span class="rlabel rlabel-name${active}" data-marker="${z.marker}"
+        style="left:${outerPos.left}%;top:${outerPos.top}%;transform:translate(-50%,-50%) rotate(${outerPos.rotate}deg);">${z.name}</span>
+      <span class="rlabel rlabel-range${active}" data-marker="${z.marker}"
+        style="left:${innerPos.left}%;top:${innerPos.top}%;transform:translate(-50%,-50%) rotate(${innerPos.rotate}deg);">${z.range}</span>`;
+  }).join('');
+  return `<div class="gauge-rlabels${preview?' preview':''}">${items}</div>`;
 }
 
 /* ============ PLAN LOGIC ============ */
@@ -129,7 +166,8 @@ function calcPlano(){
 
   let objetivo, meta, deficit=false, superavit=false;
   if(imc < 18.5){ objetivo='Ganho de peso saudável'; meta = tdee + 350; superavit=true; }
-  else if(imc < 25){ objetivo='Manutenção e condicionamento'; meta = tdee; }
+  else if(imc < 23){ objetivo='Manutenção e condicionamento'; meta = tdee; }
+  else if(imc < 25){ objetivo='Manutenção com atenção'; meta = tdee - 200; }
   else if(imc < 30){ objetivo='Emagrecimento moderado'; meta = tdee - 450; deficit=true; }
   else { objetivo='Emagrecimento'; meta = tdee - 550; deficit=true; }
 
@@ -393,16 +431,9 @@ function renderStep0(){
     </div>
     <div class="hero-visual">
       <div class="gauge-frame">
-        ${gaugeLabelsHTML(true)}
         <div class="gauge">
-          <div class="gauge-arc" style="background:conic-gradient(from 180deg,
-              transparent 0deg 90deg,
-              var(--coral) 90deg 115.2deg,
-              var(--lime) 115.2deg 162deg,
-              var(--amber) 162deg 198deg,
-              var(--coral) 198deg 270deg,
-              transparent 270deg 360deg);"></div>
-          <div class="gauge-mask"></div>
+          ${gaugeRingsHTML()}
+          ${gaugeLabelsHTML(true)}
           <div class="gauge-needle preview"></div>
         </div>
       </div>
@@ -461,18 +492,30 @@ function renderStep1(){
   </div>`;
 }
 
+function needleAngleFor(imc){
+  // 5 faixas de 36° cada no mostrador; a agulha se posiciona proporcionalmente
+  // dentro da faixa real de cada zona (com limites visuais nas pontas abertas).
+  if(imc < 18.5){
+    const t = Math.min(Math.max((imc-12)/(18.5-12), 0), 1);
+    return t*36;
+  }
+  if(imc < 23) return 36 + ((imc-18.5)/(23-18.5))*36;
+  if(imc < 25) return 72 + ((imc-23)/(25-23))*36;
+  if(imc < 30) return 108 + ((imc-25)/(30-25))*36;
+  const t = Math.min(Math.max((imc-30)/(45-30), 0), 1);
+  return 144 + t*36;
+}
+
 function renderStep2(){
   const imc = calcIMC();
   const classe = classificaIMC(imc);
-  const clamped = Math.min(Math.max(imc,15),40);
-  const angle = ((clamped-15)/25)*180;
+  const angle = needleAngleFor(imc);
   const notes = {
     'Abaixo do peso':'Seu IMC indica que você está abaixo da faixa considerada saudável. Seu plano vai priorizar ganho de peso de forma gradual e nutritiva.',
-    'Peso normal':'Seu IMC está dentro da faixa considerada saudável. Seu plano vai focar em manutenção, condicionamento e hábitos consistentes.',
+    'Normal':'Seu IMC está dentro da faixa considerada saudável. Seu plano vai focar em manutenção, condicionamento e hábitos consistentes.',
+    'Risco de sobrepeso':'Seu IMC está no limite da faixa saudável. Pequenos ajustes agora previnem o sobrepeso — seu plano foca em manter o que já vai bem e afinar hábitos.',
     'Sobrepeso':'Seu IMC está acima da faixa considerada ideal. Seu plano vai priorizar um déficit calórico moderado e sustentável.',
-    'Obesidade grau I':'Seu IMC indica obesidade grau I. Seu plano vai focar em emagrecimento gradual, com treino adaptado ao seu nível atual.',
-    'Obesidade grau II':'Seu IMC indica obesidade grau II. Recomendamos também acompanhamento médico junto ao plano de emagrecimento.',
-    'Obesidade grau III':'Seu IMC indica obesidade grau III. É importante buscar acompanhamento médico especializado além do plano de hábitos.'
+    'Obeso':'Seu IMC indica obesidade. Seu plano vai focar em emagrecimento gradual, com treino adaptado ao seu nível atual — recomendamos também acompanhamento médico.'
   };
   return `
   <div class="card">
@@ -481,16 +524,9 @@ function renderStep2(){
     <p class="sub">Índice de Massa Corporal — relação entre seu peso e sua altura.</p>
     <div class="imc-wrap zona-${classe.zona}">
       <div class="gauge-frame">
-        ${gaugeLabelsHTML(false, classe.marker)}
         <div class="gauge">
-          <div class="gauge-arc" style="background:conic-gradient(from 180deg,
-              transparent 0deg 90deg,
-              var(--coral) 90deg 115.2deg,
-              var(--lime) 115.2deg 162deg,
-              var(--amber) 162deg 198deg,
-              var(--coral) 198deg 270deg,
-              transparent 270deg 360deg);"></div>
-          <div class="gauge-mask"></div>
+          ${gaugeRingsHTML()}
+          ${gaugeLabelsHTML(false, classe.marker)}
           <div class="gauge-needle" style="--angle:${angle}deg;--needle-color:${classe.color}"></div>
         </div>
       </div>

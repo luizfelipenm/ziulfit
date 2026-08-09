@@ -34,15 +34,15 @@ Para publicar no GitHub Pages: suba a pasta inteira no repositório e ative o Pa
 
 ## Changelog
 
-- **Correção crítica do velocímetro**: identificado um bug matemático real no `conic-gradient` que comprimia as 4 faixas de cor inteiras no lado esquerdo do arco (o vermelho, verde e amarelo ficavam praticamente invisíveis, sobrando só uma fatia de vermelho e amarelo). A fórmula de ângulo foi corrigida para que as cores agora preencham corretamente todo o arco visível, da esquerda para a direita: vermelho → verde → amarelo → vermelho. Também aumentada a opacidade base dos rótulos (de 30% para 72%) para que fiquem sempre nitidamente coloridos, mesmo fora do estado "aceso".
-- **Marcadores nomeados e acesos no velocímetro**: cada faixa do velocímetro (Abaixo, Normal, Sobrepeso, Obesidade) tem seu nome exibido acima, na cor da própria faixa. Na home, o rótulo acende quando o ponteiro da prévia passa por cima daquela faixa. No resultado real, o rótulo correspondente ao IMC calculado já aparece aceso.
-- **Correção do mapeamento de cores**: o velocímetro segue vermelho → verde → amarelo → vermelho da esquerda para a direita — vermelho para abaixo do peso, verde para peso normal, amarelo para sobrepeso, vermelho para obesidade (qualquer grau).
-- **Prévia animada na home**: o velocímetro da página inicial varre continuamente todo o mostrador, mudando de cor ao cruzar cada faixa, demonstrando como o resultado real vai aparecer. O velocímetro do resultado (etapa "Seu IMC") continua fixo na posição real calculada.
-- **Animações**: a logo ganhou um pulso cardíaco com a linha se "desenhando" continuamente; o ponteiro do velocímetro real faz uma varredura de entrada garantida e pulsa suavemente quando cai na faixa vermelha. Tudo respeita `prefers-reduced-motion`.
-- **Cálculo do IMC corrigido**: identificadas duas causas raiz que faziam o resultado sempre cair em "Obesidade grau III" — altura digitada em metros sendo tratada como centímetros, e peso com vírgula sendo mal interpretado. Os campos agora aceitam vírgula ou ponto livremente, convertem metros→cm automaticamente, e validam a faixa plausível.
-- **Persistência**: respostas são salvas automaticamente em `localStorage`. Ao reabrir o site, a pessoa pode retomar de onde parou ou começar do zero.
-- **Séries nos exercícios**: cada exercício do plano de treino mostra séries x repetições, ajustadas pelo objetivo e nível de atividade.
-- **Biotipo**: etapa com teste do punho (ilustrado) e 3 cards (Ecto/Meso/Endomorfo) que ajustam calorias, macros e cardio do plano final.
-- **Logo "ZIULFIT"**: corrigido bug de `flex gap`; clicar no logo volta para a página inicial mantendo os dados preenchidos.
-- **Mobile**: testado em iPhone (Safari) e Android (Chrome) sem overflow horizontal em nenhuma etapa.
+- **Meta tags de link (Open Graph / Twitter Card)**: adicionadas todas as tags que controlam como o link aparece ao ser compartilhado no WhatsApp, Telegram, Instagram, X/Twitter, LinkedIn etc. — título, descrição, e uma imagem de preview (`assets/img/og-image.png`, 1200×630) desenhada no mesmo estilo visual do site. Também incluídas as tags padrão de SEO (`description`, `keywords`) e `<link rel="canonical">`. **Importante**: as URLs usam `https://ziulfit.digital/` como placeholder — troque pelo domínio real assim que definir onde vai hospedar (busque e substitua essa URL em `index.html`).
+- **Velocímetro redesenhado conforme referência**: agora com 5 faixas (Abaixo do peso, Normal, Risco de sobrepeso, Sobrepeso, Obeso) usando as faixas oficiais `<18,5 / 18,5–22,9 / 23–24,9 / 25–29,9 / >30`, em dois anéis concêntricos — externo com o nome da categoria, interno com a faixa numérica — e um hub central "IMC". Ponteiro mantido com a mesma mecânica de sempre, só a paleta foi atualizada.
+- **Marcadores nomeados e acesos no velocímetro**: cada faixa tem seu nome e faixa numérica exibidos diretamente sobre o anel colorido, com destaque quando o ponteiro passa por cima (na prévia) ou aponta pra ela (no resultado real).
+- **Prévia animada na home**: o velocímetro da página inicial varre continuamente as 5 faixas, demonstrando como o resultado real vai aparecer.
+- **Animações**: a logo tem um pulso cardíaco com a linha se "desenhando" continuamente. Tudo respeita `prefers-reduced-motion`.
+- **Cálculo do IMC corrigido**: altura em metros e peso com vírgula agora são interpretados corretamente, com validação de faixa plausível.
+- **Persistência**: respostas salvas automaticamente em `localStorage`, com opção de retomar de onde parou.
+- **Séries nos exercícios**: cada exercício mostra séries x repetições, ajustadas pelo objetivo e nível de atividade.
+- **Biotipo**: etapa com teste do punho e 3 cards (Ecto/Meso/Endomorfo) que ajustam o plano final.
+- **Logo "ZIULFIT"**: junta corretamente; clicar nela volta para a página inicial.
+- **Mobile**: testado em iPhone (incluindo a largura mais estreita comum, 375px) e Android sem overflow horizontal.
 
